@@ -220,3 +220,58 @@ main{
 .tabbar button .t-ico{display:flex;align-items:center;justify-content:center;height:22px}
 .r-ico{display:flex;align-items:center;justify-content:center}
 .row .r-ico svg{width:19px;height:19px}
+
+/* ---------- 顶栏工具组 ---------- */
+.topbar .tools{display:flex;gap:2px;flex:0 0 auto}
+.icon-btn svg{width:19px;height:19px}
+
+/* ---------- 模拟测试 ---------- */
+.qwrap.exam .exambar{
+  display:flex;align-items:center;gap:10px;
+  background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);
+  border-radius:10px;padding:8px 12px;margin-bottom:12px;font-size:12.5px;
+}
+.ex-tag{color:var(--accent);font-weight:600;letter-spacing:.03em}
+.ex-time{color:var(--fg2);font-variant-numeric:tabular-nums;font-weight:600}
+.exambar .sp{flex:1}
+.mini{
+  border:1px solid var(--line2);background:var(--bg2);color:var(--fg2);
+  font-size:12px;padding:3px 10px;border-radius:999px;cursor:pointer;font-family:inherit;
+}
+.mini:active{background:var(--bg3)}
+
+.btn.wide{width:100%;font-size:13.5px;color:var(--fg2);padding:10px}
+
+/* ---------- 成绩页 ---------- */
+.result{text-align:center;padding:18px 0 6px}
+.result .score{
+  font-size:56px;font-weight:700;letter-spacing:-.04em;line-height:1.05;
+  color:var(--accent);font-variant-numeric:tabular-nums;
+}
+.result .score span{font-size:24px;font-weight:600;margin-left:2px}
+.result .score.good{color:var(--ok)}
+.result .score.mid{color:var(--warn)}
+.result .score.bad{color:var(--bad)}
+.result .sub{font-size:13px;color:var(--fg2);margin-top:6px}
+.chart{display:flex;flex-direction:column;gap:7px;margin-bottom:6px}
+.chrow{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--fg2)}
+.chrow .cn{flex:0 0 82px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chrow .cbar{flex:1;height:7px;border-radius:4px;background:var(--bg3);overflow:hidden}
+.chrow .cbar i{display:block;height:100%;background:var(--accent);border-radius:4px;transition:width .4s}
+.chrow .cv{flex:0 0 42px;text-align:right;font-variant-numeric:tabular-nums}
+.rsrc{color:var(--fg3);font-size:12.5px}
+.ana.recite .src{color:var(--ok)}
+.ana.recite{padding-top:14px}
+.qwrap .grp{margin-top:16px}
+.btn.ghost.skip{font-size:14px;padding:13px 16px}
+/* ---------- 我的页统计卡 ---------- */
+.cardh{
+  display:flex;align-items:center;gap:8px;
+  font-size:13px;font-weight:600;color:var(--fg2);margin-bottom:11px;
+}
+.cardh .mini{margin-left:auto}
+.card .chart{margin-bottom:2px}
+#ch-chart[hidden]{display:none}
+.cv.good{color:var(--ok);font-weight:600}
+.cv.mid{color:var(--warn);font-weight:600}
+.cv.bad{color:var(--bad);font-weight:600}
