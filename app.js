@@ -14,6 +14,7 @@
     filter: { ch: 'all', type: 'all', mode: 'all' },
     pos: 0,
     seed: 0,
+    ids: null,
     tab: 'quiz',
     exam: null        // 模拟考试
   };
@@ -90,6 +91,7 @@
   }
   function reshuffle() {
     st.seed = Math.floor(Math.random() * 1e9);
+    st.ids = null;
     st.pos = 0;
     save();
     if (st.tab === 'quiz') renderQuiz();
@@ -117,6 +119,8 @@
     id: 'e' + i, kind: 'essay', ch: e.group, s: e.q, points: e.points, group: e.group
   }));
   const ALL_ITEMS = D.choice.concat(SHORT_ITEMS, ESSAY_ITEMS);
+  const BY_ID = {};
+  ALL_ITEMS.forEach(q => { BY_ID[q.id] = q; });
 
   function visible(q) {
     const f = st.filter;
@@ -133,7 +137,19 @@
     return true;
   }
 
-  function pool() { return shuffled(ALL_ITEMS.filter(visible)); }
+  function pool() {
+    // 冻结列表：进入一批题（错题/待复习/收藏）时把 id 顺序定下来，
+    // 这样刷的过程中答对移出错题本，也不会让后面的题往前挤、跳题。
+    const key = st.filter.ch + '|' + st.filter.type + '|' + st.filter.mode;
+    if (st.ids && st.ids.key === key) {
+      const l = st.ids.list.map(id => BY_ID[id]).filter(Boolean);
+      if (l.length) return l;
+    }
+    const l = shuffled(ALL_ITEMS.filter(visible));
+    st.ids = { key: key, list: l.map(q => q.id), t0: Date.now() };
+    return l;
+  }
+  function resetPool() { st.ids = null; }
 
   /* ---------------- 统计 ---------------- */
   function stat() {
@@ -195,29 +211,38 @@
     if (st.pos >= list.length) st.pos = Math.max(0, list.length - 1);
 
     if (!list.length) {
-      el.innerHTML = '<div class="empty"><div class="big">✓</div>这个筛选条件下没有题目<br><span style="font-size:13px">换个条件试试</span></div>';
+      const m = st.filter.mode;
+      const msg = m === 'wrong'
+        ? '错题都刷完了 🎉<br><span style="font-size:13px">这一批没有待复习的题了</span>'
+        : m === 'fav'
+          ? '还没有收藏的题<br><span style="font-size:13px">做题时点 ☆ 收藏想再看一遍的题</span>'
+          : '这个筛选条件下没有题目<br><span style="font-size:13px">换个条件试试</span>';
+      el.innerHTML = `<div class="empty"><div class="big">${m === 'wrong' ? '✓' : '·'}</div>${msg}</div>`;
       return;
     }
 
     const q = list[st.pos];
     const kind = q.kind || 'choice';
     const rec = kind === 'choice' ? st.ans[q.id] : st.mem[q.id];
-    const closed = !!rec;
+    const closed = isClosed(q);
     pend = [];
 
     if (kind !== 'choice') {
-      el.innerHTML = cardRecite(q, rec, list);
+      el.innerHTML = cardRecite(q, closed ? rec : null, list);
       bindRecite(q, list);
       return;
     }
 
     const multi = q.t === 'multi';
+    const MODE_TAG = { wrong: '错题重练', todo: '未做', fav: '收藏', dm: '精简版未收录' };
+    const mt = MODE_TAG[st.filter.mode] || '';
     const head = `
       <div class="bar"><i style="width:${(st.pos + 1) / list.length * 100}%"></i></div>
       <div class="qhead">
         <span class="idx">${st.pos + 1} / ${list.length}</span>
         <span class="tag ${multi ? 'multi' : ''}">${multi ? '多选' : '单选'}</span>
         ${q.dm ? '<span class="tag" style="color:var(--warn);border-color:var(--warn)">精简版未收录</span>' : ''}
+        ${mt && mt !== '精简版未收录' ? '<span class="tag" style="color:var(--accent);border-color:var(--accent)">' + mt + '</span>' : ''}
         <span class="sp"></span>
         <span>${esc((q.ch || '').split('  ')[0])}</span>
       </div>
@@ -341,15 +366,27 @@
   }
 
   function markMem(q, ok) {
+    const prev = st.mem[q.id];
     st.mem[q.id] = { ok: ok, t: Date.now() };
     delete q._revealed;
     save();
     renderQuiz();
     if (!ok) toast('已记入待复习');
+    else if (prev && prev.ok === false) toast('✓ 已移出待复习');
+  }
+
+  // 这一题当前是否处于「已作答、锁定」状态。
+  // 错题重练 / 待复习 / 收藏：本批次开始前的旧记录不算锁定，要能重做。
+  function isClosed(q) {
+    const kind = q.kind || 'choice';
+    const rec = kind === 'choice' ? st.ans[q.id] : st.mem[q.id];
+    if (!rec) return false;
+    const redoMode = ['wrong', 'todo', 'fav'].indexOf(st.filter.mode) >= 0;
+    return !redoMode || !st.ids || !st.ids.t0 || rec.t > st.ids.t0;
   }
 
   function onPick(q, k, btn) {
-    if (st.ans[q.id]) return;
+    if (isClosed(q)) return;
     if (q.t === 'single') {
       pend = [k];
       document.querySelectorAll('.opt').forEach(b =>
@@ -377,6 +414,7 @@
   }
 
   function commit(q) {
+    const prev = st.ans[q.id];
     const picked = pend.slice().sort();
     const right = q.a.split('').sort();
     const ok = picked.length === right.length && picked.every((k, i) => k === right[i]);
@@ -384,6 +422,7 @@
     save();
     renderQuiz();
     if (!ok) toast('已记入错题本');
+    else if (prev && prev.ok === false) toast('✓ 答对了，已移出错题本');
   }
 
   function next() {
@@ -707,7 +746,7 @@
         <span class="r-main">模拟测试<span class="r-sub">随机抽 25 单选 + 10 多选，各章平均</span></span>
         <span class="r-val">开始 ›</span></div>
       <div class="row" data-act="wrong"><span class="r-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></span>
-        <span class="r-main">错题本<span class="r-sub">做错的题 + 没记住的简答论述</span></span>
+        <span class="r-main">刷错题<span class="r-sub">每进一次换一次随机顺序，答对自动移出</span></span>
         <span class="r-val">${A.wrongN} 题 ›</span></div>
       <div class="row" data-act="fav"><span class="r-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 4l2.5 5.2 5.5.8-4 3.9 1 5.6L12 16.8 6.9 19.5l1-5.6-4-3.9 5.5-.8z"/></svg></span>
         <span class="r-main">我的收藏<span class="r-sub">标记待复习的题</span></span>
@@ -743,7 +782,7 @@
         else if (a === 'mem') gotoQuiz('wrong', 'all');
         else if (a === 'reset') {
           if (confirm('确定清空所有做题记录和收藏？')) {
-            st.ans = {}; st.mem = {}; st.fav = []; st.pos = 0; st.exam = null;
+            st.ans = {}; st.mem = {}; st.fav = []; st.pos = 0; st.exam = null; st.ids = null;
             localStorage.removeItem(LSKEY);
             renderAll();
             toast('已清空');
@@ -758,6 +797,12 @@
     st.filter.ch = 'all';
     st.filter.type = type || 'all';
     st.pos = 0;
+    st.ids = null;
+    // 每次进入错题 / 待复习 / 收藏，都换一次随机顺序，避免每次同样次序
+    if (mode === 'wrong' || mode === 'todo' || mode === 'fav') {
+      st.seed = Math.floor(Math.random() * 1e9);
+    }
+    save();
     switchTab('quiz');
     renderQuiz();
   }
@@ -813,6 +858,7 @@
     s.querySelector('#f-cancel').addEventListener('click', closeFilter);
     s.querySelector('#f-ok').addEventListener('click', () => {
       st.filter.ch = ch; st.filter.mode = mode; st.filter.type = type; st.pos = 0;
+      st.ids = null;
       save(); closeFilter(); renderQuiz(); switchTab('quiz');
       const n = pool().length;
       toast(n ? `共 ${n} 题` : '该条件下没有题目');

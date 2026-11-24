@@ -1,5 +1,5 @@
 /* 期末冲刺 · 离线缓存 */
-const V = 'szk-v5';
+const V = 'szk-v7';
 const ASSETS = [
   './',
   './index.html',

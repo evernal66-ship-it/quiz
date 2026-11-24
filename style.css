@@ -207,7 +207,7 @@ main{
 .sheet h3{margin:0 0 14px;font-size:16px;font-weight:600}
 /* ---------- toast ---------- */
 #toast{
-  position:fixed;left:50%;bottom:calc(84px + var(--safe-b));transform:translate(-50%,12px);
+  position:fixed;left:50%;top:calc(64px + var(--safe-t));transform:translate(-50%,-10px);
   background:rgba(28,28,31,.94);color:#fff;font-size:13.5px;padding:9px 17px;
   border-radius:999px;opacity:0;pointer-events:none;transition:opacity .18s, transform .18s;
   z-index:200;max-width:80vw;text-align:center;
