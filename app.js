@@ -128,13 +128,9 @@
 
     let btns;
     if (!closed) {
-      if (q.t === 'multi') {
-        btns = `<div class="actions">
-          <button class="btn primary" id="btn-submit" disabled>请选择答案</button>
-        </div>`;
-      } else {
-        btns = `<div class="actions"><button class="btn primary" disabled>点击选项作答</button></div>`;
-      }
+      btns = `<div class="actions">
+        <button class="btn primary" id="btn-submit" disabled>请选择答案</button>
+      </div>`;
     } else {
       const faved = st.fav.indexOf(q.id) >= 0;
       btns = `<div class="actions">
@@ -162,19 +158,25 @@
   function onPick(q, k, btn) {
     if (st.ans[q.id]) return;
     if (q.t === 'single') {
+      // 单选：只选中，等用户自己点提交
       pend = [k];
-      commit(q);
-      return;
+      document.querySelectorAll('.opt').forEach(b =>
+        b.classList.toggle('picked', b.dataset.k === k));
+    } else {
+      const i = pend.indexOf(k);
+      if (i >= 0) pend.splice(i, 1); else pend.push(k);
+      btn.classList.toggle('picked');
     }
-    // 多选：切换
-    const i = pend.indexOf(k);
-    if (i >= 0) pend.splice(i, 1); else pend.push(k);
-    btn.classList.toggle('picked');
+    updateSubmit(q);
+  }
+
+  function updateSubmit(q) {
     const sub = $('#btn-submit');
-    if (sub) {
-      sub.disabled = pend.length === 0;
-      sub.textContent = pend.length ? `提交答案（已选 ${pend.length} 项）` : '请选择答案';
-    }
+    if (!sub) return;
+    const n = pend.length;
+    sub.disabled = n === 0;
+    sub.textContent = n === 0 ? '请选择答案'
+      : (q.t === 'multi' ? `提交答案（已选 ${n} 项）` : '提交答案');
   }
 
   function submit(q) {
