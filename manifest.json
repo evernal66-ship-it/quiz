@@ -1,0 +1,32 @@
+{
+ "name": "期末冲刺 · 习概刷题",
+ "short_name": "期末冲刺",
+ "description": "习近平新时代中国特色社会主义思想概论 期末考试复习：272 道选择题带出处解析、36 条简答知识点、18 道论述题",
+ "start_url": "./index.html",
+ "scope": "./",
+ "display": "standalone",
+ "orientation": "portrait",
+ "background_color": "#f7f5f2",
+ "theme_color": "#a4262c",
+ "lang": "zh-CN",
+ "icons": [
+  {
+   "src": "icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "icon-180.png",
+   "sizes": "180x180",
+   "type": "image/png",
+   "purpose": "any"
+  }
+ ]
+}
